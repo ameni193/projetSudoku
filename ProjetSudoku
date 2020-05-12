@@ -1,0 +1,469 @@
+package projetsudoku;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import static java.lang.Math.random;
+import java.util.Scanner;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import static projetsudoku.ProjetSudoku.CopieM;
+
+
+public class ProjetSudoku   {
+    
+    public static JFrame f = new JFrame("Sudoku");
+    public static JTextField[][] M = new JTextField[9][9];
+    public static JTextField[][] CopieM = new JTextField[9][9];
+    boolean ver3=false;
+    
+    
+    public static void colorier(JTextField[][]m){// colorier quelques cases pour que la grille sera plus claire
+        int x,y;//x pour les lignes et y pour les colonnes
+        for(x=0 ; x<9 ; x++){
+            for(y=0 ; y<9 ; y++){
+                switch(x){
+                    case 0:case 1:case 2://ligne 0, 1 et 2
+                        switch(y){
+                            case 0:case 1:case 2:case 6:case 7:case 8: m[x][y].setBackground(Color.CYAN);break;//colonne 0, 1, 2, 6, 7, 8 de lignes 0, 1 et 2 
+                        }
+                    break; 
+                    case 3:case 4:case 5:
+                        switch(y){
+                            case 3:case 4:case 5: m[x][y].setBackground(Color.CYAN);break;
+                        }
+                    break;
+                    case 6:case 7:case 8:
+                        switch(y){
+                            case 0:case 1:case 2:case 6:case 7:case 8: m[x][y].setBackground(Color.CYAN);
+                        
+                    break;
+                    }
+                    
+                }
+            }
+        }
+    }
+    
+  //elle permet d'effacer des cases par ligne
+    public static void effacer(JTextField[][]K ,int x){ 
+        int c;int col;
+        for (int i=0;i<9;i++){
+            c=0;
+            int v=(int)(x*random())+3; // v represente le nombre de cases a effacer dans la ligne i(minimum 3 cases)
+            while(c<v){
+            	
+                col=(int)(9.0*random());
+                if (!(K[i][col].getText().equals(""))) {
+                    K[i][col].setText("");
+                    c++;
+                }
+            }
+        }
+    }
+    
+   
+    public static void verouiller(JTextField[][]K){// Pour qu'on ne peut pas toucher(modifier ou supprimer) les cases par défaut
+        int i,j;
+        for (i=0;i<9;i++){
+            for (j=0;j<9;j++) {
+             if (K[i][j].getText().equals("")){
+                K[i][j].setEditable(true);
+             }  
+             else K[i][j].setEditable(false);
+            }         
+        }
+    }
+     
+    public static void Copier(JTextField [][]K, JTextField[][]L){// Pour copier les valeurs des cases avant q'on les efface
+        int i,j;
+        for (i=0;i<9;i++){
+            for (j=0;j<9;j++) {
+               try{
+            	 //L est la copie
+               L[i][j].setText(K[i][j].getText());
+               } 
+               catch(NullPointerException e){}
+            }      
+        }
+    }
+        
+     
+    public static void init(JTextField[][]K){//construire et initialiser( à zero) la copie de la grille avant d'accéder à la méthode effacer
+        int i,j;
+        for (i=0;i<9;i++){
+            for (j=0;j<9;j++) {
+               K[i][j]=new JTextField();
+               try{
+               K[i][j].setText("0");  }
+               catch(NullPointerException e){}
+            } 
+        }  
+    }
+     
+    public static JFrame frame (JFrame f ,JFrame f2 ){// faire la mise en forme  de la  fenetre du jeu(ajouter un autre fenetre f2 à la fenetre f)
+        f.setVisible(false); //pour que la prémiére fenetre n'apparait pas lorsque on passe à la deuxieme fenetre                        
+        f2.setTitle("Sudoku");
+        f2.setSize(500,500);
+        f2.setVisible(true);
+        f2.setResizable(false);// pour ne pas changer la taille de la fenetre
+        f2.setLocationRelativeTo(null);
+        f2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f2.setLayout(new FlowLayout());
+        return(f2);
+         
+    }
+  //création et ajout du bouton c1 dans la fénetre f
+    public static void bouton( JButton c1 , JFrame f){
+                                
+        c1.setPreferredSize(new Dimension(300, 50));
+        c1.setFont(new Font("Serif", Font.BOLD, 30));
+        c1.setBackground(Color.CYAN);
+        f.getContentPane().add(c1);
+        
+    }
+    
+    public static void bouton1 (JButton a , JPanel p){
+        
+        a.setForeground(Color.gray);
+        a.setFont(new Font("Serif", Font.BOLD, 20));
+        p.add(a);
+        
+    }
+    
+    //manipule  la grille de cet jeu ( partie grille de la fenetre )
+   
+    private void setJPanelOne (JFrame f, int y){
+        int t=0;
+        JPanel p = new JPanel();
+        p.setPreferredSize(new Dimension(400,350));
+        p.setLayout(new GridLayout(9,9));       
+        Font font = new Font("Cursive",Font.BOLD,28);//pour choisir la taille des nombres que se trouve dans les cases
+        try{
+            //Choisir un fichier aléatoire du dossier Sudoku pour initialiser la grille
+            t=(int)(10.0*random());
+            File dir = new File("C:\\Users\\User\\Desktop\\Sudoku");
+            File[] liste = dir.listFiles();//on met tous les fichiers que se trouve dans le dossier sudoku dans une liste
+            File file = new File("C:\\Users\\User\\Desktop\\Sudoku\\"+liste[t].getName());// file est un fichier choisi aléatoirement à partir de dossier sudoku exemple f1.txt
+            Scanner scan = new Scanner (file);//pour lire le fichier.txt choisi 
+            for( int i=0 ; i<9 ; i++ ){
+                for(int j=0 ; j<9 ; j++){
+                    M[i][j] = new JTextField();
+                    M[i][j].setFont(font);
+                    M[i][j].setForeground(Color.black);// les couleurs des nombres fixes
+                    M[i][j].setHorizontalAlignment(SwingConstants.CENTER);
+                    String entier = scan.nextLine();// pour passer à la ligne suivante de fichier.txt
+                    M[i][j].setText(entier); 
+                    M[i][j].addKeyListener(new KeyAdapter() {//des actions qui se passent lorsque l'utilisateur enleve les doigts sur la touche du clavier.... 
+                        public void keyReleased(KeyEvent ke) {
+                            int v=0;int v1=0;
+                        
+                            JTextField tf = (JTextField) ke.getSource();
+                            tf.setFont(new Font("Arial Black",Font.BOLD,28));//la taille de nombre q'on va ecrire dans une case vide
+                            tf.setForeground(Color.BLUE);//lorsque le nombre q'on a met dans la case est vrai alors il apparait en blue 
+                            String text = tf.getText();
+                            //chaque case doit contenir seulement des nombres de 1 à 9
+                            if((!text.equals("1"))&&(!text.equals("2"))&&(!text.equals("3"))&&(!text.equals("4"))&&(!text.equals("5"))&&(!text.equals("6"))&&(!text.equals("7"))&&(!text.equals("8"))&&(!text.equals("9")))
+                            tf.setText("");
+                          //en parcourant la grille ligne par ligne on vérifie si le nombre que on a choisi est le vrai nombre ou non
+                            //sinon il apparait en rouge ( la vérification se fait à partir de la copie CopieM ) 
+                            for (int i=0; i<M.length;i++){
+                                for (int j=0; j<M[i].length;j++){
+                                    if(M[i][j]==tf ||M[i][j].equals(tf)){
+                                    try{                
+                                        v=Integer.parseInt(M[i][j].getText());
+                                        v1=Integer.parseInt(CopieM[i][j].getText());} 
+                                    catch(NumberFormatException nfe){}
+                                    if(v!=v1) M[i][j].setForeground(Color.red);        
+                                    break;
+                                }
+                            }
+                        }}
+                    });
+                    
+                    p.add(M[i][j]);                        
+                }
+            }
+            
+        }catch(Exception e){
+        }
+        colorier(M);    
+        f.add(p);        
+        init(CopieM);
+        Copier(M,CopieM);
+        effacer(M,y);
+        verouiller(M);
+        
+    }
+    
+    public static void label (String s,JFrame f){// afin de reduire les lignes du code et facilité sa lecture  ,,, car cette se répéte  plusieurs fois 
+        
+        JLabel l1=new JLabel(s);
+        f.getContentPane().add(l1);
+        l1.setFont(new Font("Serif", Font.BOLD, 18));
+        
+    }
+
+          
+    public static boolean verif(JTextField[][]K,JTextField[][]L){// vérifie la validité du jeu a partir de la copie de la grille 
+        
+        for (int i =0;i<9;i++){
+            for (int j =0;j<9;j++){
+                if(!(K[i][j].getText().equals(L[i][j].getText()))) return false;
+            }  
+        }
+        return true;
+    }
+    
+    
+    private void setJPanelTwo(JFrame f){// création du panel qui contient les bouttons (Check , restart , rules,save ..)
+        
+        JPanel p = new JPanel();
+        p.setPreferredSize(new Dimension(400,100));
+        JButton a =new JButton("Check");
+        bouton1(a,p);
+        JButton b =new JButton("Restart");
+        bouton1(b,p);
+        JButton c =new JButton("Rules");
+        bouton1(c,p);
+        //si on clique sur le bouton check 
+        a.addActionListener(new ActionListener(){  
+        public void actionPerformed(ActionEvent e){ 
+            if(!verif(M,CopieM)){
+                JFrame f2=new JFrame(); 
+                frame(f,f2);                
+                f2.setContentPane(new Iimage("C:\\\\img4.png"));
+                JLabel la=new JLabel(" You                                      lose!  ");
+                la.setForeground(Color.pink);//pink is the color of the two words "you lose!"   
+                la.setFont(new Font("Serif", Font.BOLD, 35));//la taille de mots you lose!
+                f2.getContentPane().add(la);
+              //on ajoute un espace entre les mots you lose ! et les deux boutons Replay et Exit
+                for(int i=0 ;i<200; i++){
+                    JLabel l=new JLabel("            ");
+                    f2.add(l);
+                }
+                JButton b= new JButton("Replay");
+                f2.add(b);
+                b.setPreferredSize(new Dimension(100, 30));
+                b.setFont(new Font("Serif", Font.BOLD, 20));
+                b.setBackground(Color.PINK);//PINK est la couleur de bouton
+              //on ajoute un espace entre les deux boutons
+                JLabel l3=new JLabel("                                                                                ");
+                f2.getContentPane().add(l3);
+                JButton c= new JButton("Exit");
+                f2.add(c);
+                c.setPreferredSize(new Dimension(100, 30));
+                c.setFont(new Font("Serif", Font.BOLD, 20));
+                c.setBackground(Color.pink);  
+                //si on clique sur Replay
+                b.addActionListener(new ActionListener(){  
+                public void actionPerformed(ActionEvent e){
+                    f2.setVisible(false);
+                    new ProjetSudoku();
+                }
+                });
+              //si on clique sur Exit
+                c.addActionListener(new ActionListener(){  
+                public void actionPerformed(ActionEvent e){
+                    f2.setVisible(false);
+                }
+                });         
+            }                
+            if (verif(M,CopieM)){
+                JFrame f1=new JFrame(); 
+                frame(f,f1);
+                f1.setContentPane(new Iimage("C:\\\\img3.png"));
+                JLabel l=new JLabel(" YOU WIN ! ");
+                l.setForeground(Color.red);  //couleur de mot you win!
+                l.setFont(new Font("Serif", Font.BOLD, 50));
+                f1.getContentPane().add(l);
+                JButton a= new JButton("Continue");                  
+                f1.add(a);
+                a.setPreferredSize(new Dimension(200, 50));
+                a.setFont(new Font("Serif", Font.BOLD, 30));
+                a.setBackground(Color.green);//c'est la couleur de la bouton
+                a.addActionListener(new ActionListener(){  
+                public void actionPerformed(ActionEvent e){ 
+                    JFrame f2=new JFrame(); 
+                    frame(f1,f2);           
+                    f2.setContentPane(new Iimage("C:\\\\img5.png"));
+                  //on ajoute des espaces pour bien positionner les deux boutons
+                    for(int i=0 ;i<100; i++){
+                        JLabel l0=new JLabel("                               ");
+                        f2.getContentPane().add(l0);            
+                    }
+                    JButton b= new JButton("Replay");
+                    f2.add(b);
+                    b.setPreferredSize(new Dimension(100, 30));
+                    b.setFont(new Font("Serif", Font.BOLD, 20));
+                    b.setBackground(Color.PINK);
+                  //on ajoute espace entre les deux boutons
+                    JLabel l3=new JLabel("                                        ");
+                    f2.getContentPane().add(l3);
+                    JButton c= new JButton("Exit");
+                    f2.add(c);
+                    c.setPreferredSize(new Dimension(100, 30));
+                    c.setFont(new Font("Serif", Font.BOLD, 20));
+                    c.setBackground(Color.pink);                   
+                    b.addActionListener(new ActionListener(){  
+                    public void actionPerformed(ActionEvent e){
+                        f2.setVisible(false);
+                        new ProjetSudoku();
+                    }
+                    });
+                    c.addActionListener(new ActionListener(){  
+                    public void actionPerformed(ActionEvent e){
+                        f2.setVisible(false);
+                    }
+                    });
+                }
+                });
+            }
+        }            
+        });
+        //si on clique sur le bouton restart
+        b.addActionListener(new ActionListener(){  
+        public void actionPerformed(ActionEvent e){ 
+            f.setVisible(false);
+            new ProjetSudoku();              
+        }
+        });
+        //si on clique sur le bouton rules
+        c.addActionListener(new ActionListener(){  
+        public void actionPerformed(ActionEvent e){          
+            JFrame f3=new JFrame();
+            frame(f,f3);         
+            label("Le Sudoku est un casse-tête qui se présente sous la forme ",f3);
+            label("d'une grille 9x9. Le casse-tête est résolu lorsque chaque ",f3);
+            label("case de la grille contient un chiffre de 1 à 9 de sorte que :",f3);
+            label("                                                             ",f3);
+            label("Au départ, un certain nombre de cases sont remplies ce qui  ",f3);
+            label("fixe des contraintes pour les autres                        ",f3);
+            label("                                                            ",f3);
+            label("Si on divise la grille en neuf carrés 3x3 chacun de ces carrés",f3);
+            label("contient une et une seule fois chaque chiffre                 ",f3);
+            label("                                                              ",f3);
+            label("Chaque colonne contient une et une seule fois chaque chiffre  ",f3);
+            label("                                                              ",f3);
+            label("Chaque ligne contient une et une seule fois chaque chiffre    ",f3);
+            JButton d =new JButton("Back");
+            d.setFont(new Font("Serif", Font.BOLD, 40));
+            f3.add(d);
+            d.setBackground(Color.pink);
+            d.setPreferredSize(new Dimension(150, 50));                           
+            d.addActionListener(new ActionListener(){  
+            public void actionPerformed(ActionEvent e){ 
+                f3.setVisible(false);
+                new ProjetSudoku();               
+            }
+            });
+                            
+        }
+        });
+        f.add(p);
+    }
+    
+    ProjetSudoku(){//constructeur du classe
+        JFrame f = new JFrame("Sudoku");
+        f.setSize(500,500);
+        f.setContentPane(new Iimage("C:\\\\img1.png"));  
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.setResizable(false);
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.setLocationRelativeTo(null);
+        for(int i=0 ;i<100; i++){
+            JLabel l0=new JLabel("                           ");
+            f.getContentPane().add(l0);                       
+        }
+        JButton a = new JButton("Play");
+        a.setPreferredSize(new Dimension(100, 30));
+        a.setFont(new Font("Serif", Font.BOLD, 20));
+        f.getContentPane().add(a);
+        a.setBackground(Color.orange);
+        f.setVisible(true);
+        a.addActionListener(new ActionListener(){          
+	public void actionPerformed(ActionEvent e){ 
+            JFrame f1 = new JFrame("Sudoku");
+            frame(f,f1);
+            f1.setContentPane(new Iimage("C:\\\\img2.png"));      
+            JLabel l1=new JLabel("                               ");
+            f1.getContentPane().add(l1);
+            JLabel l=new JLabel("Welcom , choose a level ! ");
+            l.setForeground(Color.blue);  
+            l.setFont(new Font("Serif", Font.BOLD, 25));
+            f1.getContentPane().add(l);
+          //on ajoute ces espaces pour positionner les boutons au centre de la fenetre
+            for(int i=0 ;i<20; i++){
+                JLabel l0=new JLabel("                               ");
+                f1.getContentPane().add(l0);                        
+            }
+            JButton  c1 =new JButton("Easy");  
+            bouton(c1,f1);
+            JButton  c2 =new JButton("Medium");  
+            bouton(c2,f1);                    
+            JButton  c3 =new JButton("Difficult");  
+            bouton(c3,f1);                    
+            JButton  c4 =new JButton("Expert");
+            bouton(c4,f1);                
+            f1.setVisible(true);
+            c1.addActionListener(new ActionListener(){  
+            public void actionPerformed(ActionEvent e){
+                JFrame f2=new JFrame(); 
+                frame(f1,f2);
+                setJPanelOne(f2,2);                    
+                setJPanelTwo(f2); 
+            }                    
+            });
+            c2.addActionListener(new ActionListener(){  
+            public void actionPerformed(ActionEvent e){
+                JFrame f2=new JFrame(); 
+                frame(f1,f2);
+                setJPanelOne(f2,3);
+                setJPanelTwo(f2);                  
+            }     
+            });
+            c3.addActionListener(new ActionListener(){  
+            public void actionPerformed(ActionEvent e){
+                JFrame f2=new JFrame(); 
+                frame(f1,f2);
+                setJPanelOne(f2,5);
+                setJPanelTwo(f2); 
+            }                    
+            });
+            c4.addActionListener(new ActionListener(){  
+            public void actionPerformed(ActionEvent e){
+                JFrame f2=new JFrame(); 
+                frame(f1,f2);
+                setJPanelOne(f2,7);
+                setJPanelTwo(f2); 
+            }                    
+            });
+        }});
+   
+    }
+    
+    public static void main(String[] args) {
+        
+        new ProjetSudoku();
+        
+    }
+    
+    
+    
+}
+
+
